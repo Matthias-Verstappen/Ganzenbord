@@ -1,8 +1,9 @@
-﻿using Ganzenbord.Business.Squares;
+﻿using Ganzenbord.Business.Factories;
+using Ganzenbord.Business.Squares;
 
 namespace Ganzenbord.Business
 {
-	public class Board
+    public class Board
 	{
 		public List<ISquare> Squares { get; set; } = new();
 
@@ -21,11 +22,11 @@ namespace Ganzenbord.Business
 			}
 		}
 
-		private IFactory factory;
+		private ISquareFactory factory;
 
 		private Board()
 		{
-			this.factory = new Factory();
+			this.factory = new SquareFactory();
 			SetupBoard();
 		}
 

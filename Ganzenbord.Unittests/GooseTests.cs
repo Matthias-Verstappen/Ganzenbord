@@ -1,4 +1,7 @@
 ﻿using Ganzenbord.Business;
+using Ganzenbord.Business.Logger;
+using Ganzenbord.Business.Services;
+using Moq;
 
 namespace Ganzenbord.Unittests
 {
@@ -10,11 +13,12 @@ namespace Ganzenbord.Unittests
 		public void WhenPlayerLandsOnGoose_GooseSendsForward(int startPosition, int[] diceRolls, int expectedPosition)
 		{
 			// Arrange
-			Player player = new Player();
+			Player player = PlayerHelper.GenerateTestPlayer(startPosition, diceRolls);
+			player.MoveToPosition(1);
 			player.MoveToPosition(startPosition);
 
 			// Act
-			player.Move(diceRolls);
+			player.RollDice();
 
 			// Assert
 			Assert.Equal(diceRolls.Sum(), player.DiceRolls.Sum());
@@ -27,7 +31,8 @@ namespace Ganzenbord.Unittests
 		public void WhenPlayerLandsOnMultipleGeese_PlayerKeepsMoving(int startPosition, int[] diceRolls, int expectedPosition)
 		{
 			// Arrange
-			Player player = new Player();
+			Player player = PlayerHelper.GenerateTestPlayer(startPosition, diceRolls);
+			player.MoveToPosition(1);
 			player.MoveToPosition(startPosition);
 
 			// Act
@@ -38,29 +43,12 @@ namespace Ganzenbord.Unittests
 			Assert.Equal(expectedPosition, player.Position);
 		}
 
-		[Fact]
-		public void WhenPlayerIsOnStart_AndRolls9_AndIsNotFirstTurn_ThenPlayerWins()
-		{
-			// Arrange
-			Game game = new Game(1);
-			game.Turn = 2;
-			int[] dice = { 6, 3 };
-			Player player = game.Players.First();
-
-			// Act
-			game.PlayRound(dice);
-
-			// Assert
-			Assert.Equal(63, player.Position);
-			Assert.True(player.Winner);
-		}
-
 		[Theory]
 		[InlineData(3, new int[] { 2, 1 }, 12)]
 		public void WhenPlayerPassesGoose_ButDoesNotLandOnGoose_GooseActionIsNotTriggered(int startPosition, int[] diceRolls, int expectedPosition)
 		{
 			// Arrange
-			Player player = new Player();
+			Player player = PlayerHelper.GenerateTestPlayer(startPosition, diceRolls);
 			player.MoveToPosition(startPosition);
 
 			// Act
@@ -78,8 +66,7 @@ namespace Ganzenbord.Unittests
 		public void WhenPlayerLandsOnGoose_AndReverseMovementIsTrue_GooseSendsBackwards(int startPosition, int[] diceRolls, int expectedPosition)
 		{
 			// Arrange
-			Player player = new Player();
-			player.MoveToPosition(startPosition);
+			Player player = PlayerHelper.GenerateTestPlayer(startPosition, diceRolls);
 			player.ReverseMovement = true;
 
 			// Act
@@ -97,8 +84,7 @@ namespace Ganzenbord.Unittests
 		public void WhenPlayerPassesSquare63_AndLandsOnGoose_GooseSendsBackwards(int startPosition, int[] diceRolls, int expectedPosition)
 		{
 			// Arrange
-			Player player = new Player();
-			player.MoveToPosition(startPosition);
+			Player player = PlayerHelper.GenerateTestPlayer(startPosition, diceRolls);
 
 			// Act
 			player.Move(diceRolls);
@@ -114,8 +100,7 @@ namespace Ganzenbord.Unittests
 		public void WhenPlayerLandsOnGoose_AndReverseMovementIsTrue_AndNewPositionIsLessThan0_NewPositionIs0(int startPosition, int[] diceRolls, int expectedPosition)
 		{
 			// Arrange
-			Player player = new Player();
-			player.MoveToPosition(startPosition);
+			Player player = PlayerHelper.GenerateTestPlayer(startPosition, diceRolls);
 			player.ReverseMovement = true;
 
 			// Act

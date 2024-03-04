@@ -1,24 +1,39 @@
-﻿using System;
+﻿using Ganzenbord.Business.Factories;
+using Ganzenbord.Business.Logger;
+using Ganzenbord.Business.Services;
 
 namespace Ganzenbord.Business
 {
 	public class Game
 	{
 		public List<Player> Players;
+
+		private ILogger _logger;
+		private IPlayerFactory _playerFactory;
+
 		public Board Board { get; set; }
+
 		public bool End { get; private set; }
+
 		public int Turn { get; set; } = 1;
+
+		public bool IsFirstTurn
+		{ get { return Turn == 1; } }
+
 		private Random random;
 
-		public Game(int amountOfPlayers)
+		public Game(ILogger logger, IPlayerFactory playerFactory, int amountOfPlayers)
 		{
 			Board = Board.Instance;
 			random = new Random();
 			Players = new List<Player>();
+			_logger = logger;
 
 			for (int i = 0; i < amountOfPlayers; i++)
 			{
-				Players.Add(new Player());
+				Player player = playerFactory.CreatePlayer();
+				player.PlayerNumber = i + 1;
+				Players.Add(player);
 			}
 		}
 
@@ -31,79 +46,38 @@ namespace Ganzenbord.Business
 		/// This is a fun method
 		/// </summary>
 		/// <param name="diceRolls">This value should be used for unit testing ONLY</param>
-		public void PlayRound(int[]? diceRolls = null)
+		public void PlayRound()
 		{
 			if (!End)
 			{
-				diceRolls = checkIfTestDataIsNull(diceRolls);
+				_logger.Log($"\nRound {Turn}");
 
-				if (Turn == 1)
+				foreach (Player player in Players)
 				{
-					HandleFirstTurnEdgeCase(diceRolls);
-				}
-				else
-				{
-					HandleStandardTurn(diceRolls);
+					player.RollDice(2, IsFirstTurn);
+
+					if (player.Winner)
+					{
+						End = true;
+						break;
+					}
 				}
 
-				Turn++;
+				EndTurn();
 			}
 		}
 
-		private void HandleStandardTurn(int[] diceRolls)
+		private void EndTurn()
 		{
-			foreach (Player player in Players)
-			{
-				player.PlayTurn(diceRolls);
-				if (player.Winner)
-				{
-					End = true;
-					break;
-				}
-			}
+			Turn++;
 		}
 
-		private void HandleFirstTurnEdgeCase(int[] diceRolls)
+		public void Start()
 		{
-			foreach (Player player in Players)
+			while (!End)
 			{
-				diceRolls = checkIfTestDataIsNull(diceRolls);
-
-				if (diceRolls.Contains(6) && diceRolls.Contains(3))
-				{
-					player.MoveToPosition(53);
-				}
-				else if (diceRolls.Contains(5) && diceRolls.Contains(4))
-				{
-					player.MoveToPosition(26);
-				}
-				else
-				{
-					player.PlayTurn(diceRolls);
-				}
+				PlayRound();
 			}
-		}
-
-		private int[] checkIfTestDataIsNull(int[]? diceRolls)
-		{
-			if (diceRolls == null)
-			{
-				diceRolls = RollDice();
-			}
-
-			return diceRolls;
-		}
-
-		public int[] RollDice(int amountOfDice = 2)
-		{
-			int[] rolls = new int[amountOfDice];
-
-			for (int i = 0; i < amountOfDice; i++)
-			{
-				rolls[i] = random.Next(1, 7);
-			}
-
-			return rolls;
 		}
 	}
 }
